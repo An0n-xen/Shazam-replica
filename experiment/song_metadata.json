@@ -1,0 +1,102 @@
+{
+  "1": {
+    "song_id": 1,
+    "filename": "sample1.mp3",
+    "filepath": "data\\db_tracks\\sample1.mp3",
+    "num_hashes": 20650,
+    "title": "sample1",
+    "artist": "Unknown",
+    "duration": 229.78467120181406,
+    "indexed_at": 1765904911.6388366
+  },
+  "2": {
+    "song_id": 2,
+    "filename": "sample2.mp3",
+    "filepath": "data\\db_tracks\\sample2.mp3",
+    "num_hashes": 13945,
+    "title": "sample2",
+    "artist": "Unknown",
+    "duration": 153.53034013605443,
+    "indexed_at": 1765904912.438944
+  },
+  "3": {
+    "song_id": 3,
+    "filename": "sample4.mp3",
+    "filepath": "data\\db_tracks\\sample4.mp3",
+    "num_hashes": 17230,
+    "title": "sample4",
+    "artist": "Unknown",
+    "duration": 179.53668934240363,
+    "indexed_at": 1765904913.3653038
+  },
+  "4": {
+    "song_id": 4,
+    "filename": "sample5.mp3",
+    "filepath": "data\\db_tracks\\sample5.mp3",
+    "num_hashes": 18130,
+    "title": "sample5",
+    "artist": "Unknown",
+    "duration": 184.36643990929704,
+    "indexed_at": 1765904914.3044732
+  },
+  "5": {
+    "song_id": 5,
+    "filename": "sample6.mp3",
+    "filepath": "data\\db_tracks\\sample6.mp3",
+    "num_hashes": 18178,
+    "title": "sample6",
+    "artist": "Unknown",
+    "duration": 203.87120181405896,
+    "indexed_at": 1765904915.3480933
+  },
+  "6": {
+    "song_id": 6,
+    "filename": "sample8.mp3",
+    "filepath": "data\\db_tracks\\sample8.mp3",
+    "num_hashes": 31220,
+    "title": "sample8",
+    "artist": "Unknown",
+    "duration": 324.0576870748299,
+    "indexed_at": 1765904916.900604
+  },
+  "7": {
+    "song_id": 7,
+    "filename": "sample9.mp3",
+    "filepath": "data\\db_tracks\\sample9.mp3",
+    "num_hashes": 7839,
+    "title": "sample9",
+    "artist": "Unknown",
+    "duration": 94.8302947845805,
+    "indexed_at": 1765904917.341698
+  },
+  "8": {
+    "song_id": 8,
+    "filename": "sample10.m4a",
+    "filepath": "data\\db_tracks\\sample10.m4a",
+    "num_hashes": 19079,
+    "title": "sample10",
+    "artist": "Unknown",
+    "duration": 207.40063492063493,
+    "indexed_at": 1765904918.3529983
+  },
+  "9": {
+    "song_id": 9,
+    "filename": "sample3.m4a",
+    "filepath": "data\\db_tracks\\sample3.m4a",
+    "num_hashes": 12792,
+    "title": "sample3",
+    "artist": "Unknown",
+    "duration": 135.04725623582766,
+    "indexed_at": 1765904919.1499786
+  },
+  "10": {
+    "song_id": 10,
+    "filename": "sample7.m4a",
+    "filepath": "data\\db_tracks\\sample7.m4a",
+    "num_hashes": 13266,
+    "title": "sample7",
+    "artist": "Unknown",
+    "duration": 140.80580498866212,
+    "indexed_at": 1765904919.8807027
+  }
+}
