@@ -259,7 +259,7 @@ def main():
     logger.info("🕒 Cleanup background task started (runs every 30 mins)")
 
     print("\n🌐 Starting web server at http://localhost:5000\n")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
 
 
 if __name__ == "__main__":
