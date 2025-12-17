@@ -195,7 +195,7 @@ def serve_audio(song_id):
         if song_info is None:
             return jsonify({"error": "Song not found"}), 404
         
-        file_path = song_info.get("file_path")
+        file_path = song_info.get("filepath")
         if file_path and os.path.exists(file_path):
             return send_file(file_path, mimetype="audio/mpeg")
         else:
