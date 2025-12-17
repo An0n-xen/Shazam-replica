@@ -1092,11 +1092,17 @@
                </div>` : ''}
              </div>
              
-             ${isIdentify ? `
-             <button class="play-trigger" onclick="playSong(${meta.song_id}, '${meta.title.replace(/'/g, "\\'")}', '${meta.artist.replace(/'/g, "\\'")}')">
-               ▶ PLAYBACK AUDIO
-             </button>
-             ` : ''}
+             ${isIdentify ? 
+               (meta.audio_available !== false ? `
+               <button class="play-trigger" onclick="playSong(${meta.song_id}, '${meta.title.replace(/'/g, "\\'")}', '${meta.artist.replace(/'/g, "\\'")}')">
+                 ▶ PLAYBACK AUDIO
+               </button>
+               ` : `
+               <div style="text-align:center; padding:15px; background:rgba(255,0,0,0.1); border-radius:12px; border:1px solid rgba(255,0,0,0.2); color:var(--text-dim); margin-top:15px;">
+                 ⚠️ Audio file has been archived and is no longer available for playback.
+               </div>
+               `)
+             : ''}
            `;
         } else {
            el.innerHTML = `

@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+.git
+.venv
+.dvc
+.dvcignore
+data/db/fingerprint_database.pkl
+data/db/song_metadata.json
+data/uploads/*
+data/db_tracks/*
+experiments.ipynb
+uv.lock

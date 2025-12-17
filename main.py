@@ -4,6 +4,9 @@ import os
 from pathlib import Path
 import time
 import base64
+import threading
+import glob
+from datetime import datetime, timedelta
 
 
 from utils.database import FingerprintDatabase
@@ -16,7 +19,7 @@ logger = setup_logger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = "./data/uploads"
 app.config["DATABASE_PATH"] = "./data/db/fingerprint_database.pkl"
 app.config["NEW_SONGS_FOLDER"] = "./data/db_tracks"
@@ -38,6 +41,45 @@ def load_database():
         return False
 
 
+        return False
+
+
+def cleanup_old_files():
+    """Background task to delete audio files older than 30 minutes."""
+    while True:
+        try:
+            folder = app.config["NEW_SONGS_FOLDER"]
+            # Look for audio files
+            files = []
+            for ext in ["*.mp3", "*.wav", "*.m4a"]:
+                files.extend(glob.glob(os.path.join(folder, ext)))
+            
+            logger.info(f"🧹 Running cleanup task. Checking {len(files)} files...")
+            
+            cutoff_time = time.time() - (30 * 60) # 30 minutes ago
+            deleted_count = 0
+            
+            for file_path in files:
+                try:
+                    if os.path.getmtime(file_path) < cutoff_time:
+                        os.remove(file_path)
+                        deleted_count += 1
+                        logger.info(f"Deleted old file: {os.path.basename(file_path)}")
+                except Exception as e:
+                    logger.error(f"Error checking/deleting {file_path}: {e}")
+            
+            if deleted_count > 0:
+                logger.info(f"✓ Cleanup complete. Deleted {deleted_count} files.")
+            
+        except Exception as e:
+            logger.error(f"Error in cleanup task: {e}")
+        
+        # Sleep for 30 minutes before next run
+        # For testing purposes, you might want to check more frequently, e.g. every minute
+        # but the requirement is "every 30 mins the song files get deleted"
+        time.sleep(30 * 60) 
+
+
 def identify_audio_file(filepath):
     try:
         start_time = time.time()
@@ -55,7 +97,9 @@ def identify_audio_file(filepath):
                     "score": best["score"],
                     "confidence": best["confidence"],
                     "offset": round(best["offset"], 2),
+                    "offset": round(best["offset"], 2),
                     "song_id": best["song_id"],
+                    "audio_available": os.path.exists(best["song_info"].get("filepath", "")),
                 },
                 "alternatives": [
                     {
@@ -208,6 +252,11 @@ def main():
 
     if not load_database():
         logger.warning("⚠️  Database not loaded - build it first!")
+
+    # Start cleanup thread
+    cleanup_thread = threading.Thread(target=cleanup_old_files, daemon=True)
+    cleanup_thread.start()
+    logger.info("🕒 Cleanup background task started (runs every 30 mins)")
 
     print("\n🌐 Starting web server at http://localhost:5000\n")
     app.run(host="0.0.0.0", port=5000, debug=True)
