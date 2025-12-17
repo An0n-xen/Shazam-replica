@@ -19,22 +19,35 @@ class HashConfig:
     """Configuration for hash generation"""
 
     # Target zone parameters (from paper)
-    TARGET_T_MIN = 0.0  # Min time ahead (seconds)
-    TARGET_T_MAX = 2.0  # Max time ahead (seconds)
-    TARGET_F_MIN = 0  # Min frequency difference (bins) - 0 = full spectrum
-    TARGET_F_MAX = 1000  # Max frequency difference (bins) - 1000 = essentially full
+    TARGET_T_MIN = 0.0
+    TARGET_T_MAX = 2.0
+    TARGET_F_MIN = 0
+    TARGET_F_MAX = 1000
 
     # Fan-out: max number of target points per anchor
-    FAN_OUT = 10  # Paper suggests 5-15 is good
+    FAN_OUT = 10
 
     # Hash packing
-    FREQ_BITS = 10  # Bits for frequency (1024 bins max)
-    TIME_BITS = 10  # Bits for time delta (1024 time units max)
+    FREQ_BITS = 10
+    TIME_BITS = 10
 
 
 class DatabaseConfig:
     """Configuration for database storage"""
 
     # Storage paths
-    DB_FILE = "fingerprint_database.pkl"  # Pickled database
-    METADATA_FILE = "song_metadata.json"  # Song information
+    DB_FILE = "./utils/fingerprint_database.pkl"
+    METADATA_FILE = "./utils/song_metadata.json"
+
+
+class MatchConfig:
+    """Configuration for matching algorithm"""
+
+    # Matching thresholds
+    MIN_MATCHES = 5
+
+    # Histogram binning
+    BIN_SIZE = 0.5
+
+    # Confidence scoring
+    CONFIDENCE_THRESHOLD = 5

@@ -1,10 +1,13 @@
 import librosa
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.config import HashConfig
+from typing import Callable
+from config import HashConfig
+
+from matcher import score_match, calculate_time_offsets
 
 
-def plot_constellation(audio_path: str, generate_constellation_map: function):
+def plot_constellation(audio_path: str, generate_constellation_map: Callable):
     _, graph_things, time_freq = generate_constellation_map(audio_path)
     S, sr = graph_things
     time_idx, freq_idx = time_freq
@@ -235,4 +238,147 @@ def visualize_hash_generation(
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         print(f"\n✓ Visualization saved to: {save_path}")
 
+    plt.show()
+
+
+def visualize_match(match_result, query_hashes):
+    """
+    Visualize the match using scatterplot and histogram.
+
+    Creates two plots:
+    1. Scatterplot: db_time vs sample_time (should show diagonal line)
+    2. Histogram: distribution of time offsets (should show clear peak)
+
+    Args:
+        match_result: Dict with match information
+        query_hashes: Original query hashes for context
+    """
+    time_pairs = match_result["time_pairs"]
+    song_info = match_result["song_info"]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Plot 1: Scatterplot (Database Time vs Sample Time)
+    sample_times = [s_time for s_time, _ in time_pairs]
+    db_times = [db_time for _, db_time in time_pairs]
+
+    ax1.scatter(sample_times, db_times, alpha=0.6, s=30, c="steelblue")
+
+    # Draw ideal diagonal line (if we know the offset)
+    if match_result["offset"] is not None:
+        offset = match_result["offset"]
+        x_range = [0, max(sample_times) if sample_times else 10]
+        y_range = [offset, offset + x_range[1]]
+        ax1.plot(
+            x_range,
+            y_range,
+            "r--",
+            linewidth=2,
+            label=f"Match line (offset={offset:.1f}s)",
+            alpha=0.7,
+        )
+
+    ax1.set_xlabel("Sample Time (s)", fontsize=11)
+    ax1.set_ylabel("Database Time (s)", fontsize=11)
+    ax1.set_title(
+        f"Time Alignment Scatterplot\n" f'Song: {song_info["title"][:40]}', fontsize=12
+    )
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+
+    # Plot 2: Histogram of Time Offsets
+    offsets = calculate_time_offsets(time_pairs)
+
+    ax2.hist(offsets, bins=30, color="steelblue", alpha=0.7, edgecolor="black")
+
+    # Mark the peak
+    peak_offset = match_result["offset"]
+    if peak_offset is not None:
+        ax2.axvline(
+            peak_offset,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Peak at {peak_offset:.2f}s",
+        )
+
+    ax2.set_xlabel("Time Offset (db_time - sample_time) [s]", fontsize=11)
+    ax2.set_ylabel("Number of Matches", fontsize=11)
+    ax2.set_title(
+        f"Offset Histogram\n"
+        f'Score: {match_result["score"]}, '
+        f'Confidence: {match_result["confidence"]}',
+        fontsize=12,
+    )
+    ax2.legend()
+    ax2.grid(True, alpha=0.3, axis="y")
+
+    plt.tight_layout()
+    plt.savefig("match_visualization.png", dpi=150, bbox_inches="tight")
+    print(f"  Visualization saved: match_visualization.png")
+    plt.show()
+
+
+def visualize_all_candidates(matches_by_song, database, query_hashes, top_n=4):
+    """
+    Visualize multiple candidate matches for comparison.
+    Shows why the top match is better than others.
+
+    Args:
+        matches_by_song: Dict of song_id → time_pairs
+        database: FingerprintDatabase
+        query_hashes: Query hashes
+        top_n: Number of candidates to show
+    """
+    # Score all candidates
+    candidates = []
+    for song_id, time_pairs in matches_by_song.items():
+        song_info = database.get_song_info(song_id)
+        score, offset, confidence = score_match(time_pairs)
+        candidates.append(
+            {
+                "song_id": song_id,
+                "score": score,
+                "offset": offset,
+                "time_pairs": time_pairs,
+                "song_info": song_info,
+            }
+        )
+
+    candidates.sort(key=lambda x: x["score"], reverse=True)
+    candidates = candidates[:top_n]
+
+    # Create subplots
+    n = len(candidates)
+    fig, axes = plt.subplots(1, n, figsize=(5 * n, 5))
+    if n == 1:
+        axes = [axes]
+
+    for idx, candidate in enumerate(candidates):
+        ax = axes[idx]
+
+        # Scatterplot
+        sample_times = [s for s, _ in candidate["time_pairs"]]
+        db_times = [d for _, d in candidate["time_pairs"]]
+
+        ax.scatter(sample_times, db_times, alpha=0.6, s=20)
+
+        # Diagonal line
+        if candidate["offset"] is not None:
+            x_range = [0, max(sample_times) if sample_times else 10]
+            y_range = [candidate["offset"], candidate["offset"] + x_range[1]]
+            ax.plot(x_range, y_range, "r--", linewidth=1.5, alpha=0.7)
+
+        # Title
+        title = f"#{idx+1}: {candidate['song_info']['title'][:20]}\n"
+        title += f"Score: {candidate['score']}"
+        ax.set_title(title, fontsize=10)
+        ax.set_xlabel("Sample Time (s)", fontsize=9)
+        if idx == 0:
+            ax.set_ylabel("Database Time (s)", fontsize=9)
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig("all_candidates.png", dpi=150, bbox_inches="tight")
+    print(f"  Candidate comparison saved: all_candidates.png")
     plt.show()

@@ -1,5 +1,6 @@
 import os
 import logging
+import colorlog
 
 
 def setup_logger(name=None, level=logging.INFO):
@@ -18,19 +19,27 @@ def setup_logger(name=None, level=logging.INFO):
     logger.setLevel(level)
 
     # Prevent duplicate handlers
-    if logger.handler:
+    if logger.handlers:
         return logger
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(level)
 
     # Create formatter with file name, line number, and function
-    formatter = logging.Formatter(
-        fmt="%(asctime)s | %(filename)s:%(lineno)d  | %(levelname)s | %(message)s",
+    # Colored formatter
+    console_formatter = colorlog.ColoredFormatter(
+        fmt="%(log_color)s%(asctime)s | %(filename)s:%(lineno)d | %(levelname)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG": "cyan",
+            "INFO": "white",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red,bg_white",
+        },
     )
 
-    console_handler.setFormatter(formatter)
+    console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
 
     return logger

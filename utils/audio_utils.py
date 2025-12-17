@@ -4,9 +4,14 @@ from scipy.ndimage import maximum_filter
 from scipy.io import wavfile
 from config import AudioConfig as Config
 import warnings
-from utils.visualize import visualize_constellation_map
+import logging
+from logging_config import setup_logger
+
+from visualize import visualize_constellation_map
 
 warnings.filterwarnings("ignore")
+
+logger = setup_logger(__name__, level=logging.INFO)
 
 
 def load_audio(filepath):
@@ -25,7 +30,7 @@ def load_audio(filepath):
         import librosa
 
         audio, sr = librosa.load(filepath, sr=Config.SAMPLE_RATE, mono=True)
-        print(f"✓ Loaded with librosa: {filepath}")
+        logger.info(f"✓ Loaded with librosa: {filepath}")
 
     except ImportError:
         # Fall back to scipy (wav only)
@@ -43,14 +48,16 @@ def load_audio(filepath):
 
         # Resample if needed
         if sr != Config.SAMPLE_RATE:
-            print(f"Warning: Sample rate is {sr}, expected {Config.SAMPLE_RATE}")
+            logger.warning(
+                f"Warning: Sample rate is {sr}, expected {Config.SAMPLE_RATE}"
+            )
 
-        print(f"✓ Loaded with scipy: {filepath}")
+        logger.info(f"✓ Loaded with scipy: {filepath}")
 
     duration = len(audio) / sr
-    print(f"  Duration: {duration:.2f} seconds")
-    print(f"  Sample rate: {sr} Hz")
-    print(f"  Samples: {len(audio)}")
+    logger.info(f"  Duration: {duration:.2f} seconds")
+    logger.info(f"  Sample rate: {sr} Hz")
+    logger.info(f"  Samples: {len(audio)}")
 
     return audio, sr
 
@@ -86,11 +93,11 @@ def generate_spectrogram(audio, sr):
     # Add small epsilon to avoid log(0)
     Sxx_log = 10 * np.log10(Sxx + 1e-10)
 
-    print(f"\n✓ Spectrogram generated:")
-    print(f"  Shape: {Sxx_log.shape} (freq bins × time bins)")
-    print(f"  Time bins: {len(times)}")
-    print(f"  Frequency bins: {len(freqs)}")
-    print(f"  Max frequency: {freqs[-1]:.0f} Hz")
+    logger.info(f"\n✓ Spectrogram generated:")
+    logger.info(f"  Shape: {Sxx_log.shape} (freq bins × time bins)")
+    logger.info(f"  Time bins: {len(times)}")
+    logger.info(f"  Frequency bins: {len(freqs)}")
+    logger.info(f"  Max frequency: {freqs[-1]:.0f} Hz")
 
     return freqs, times, Sxx_log
 
@@ -123,14 +130,14 @@ def find_peaks(spec, freqs, times):
     # Get coordinates of all peaks
     peak_coords = np.argwhere(peak_mask)
 
-    print(f"\n✓ Initial peaks found: {len(peak_coords)}")
+    logger.info(f"\n✓ Initial peaks found: {len(peak_coords)}")
 
     # Step 3: Apply density control - limit peaks per time window
     # This ensures uniform coverage (paper's "density criterion")
     peaks = apply_density_control(peak_coords, spec, times)
 
-    print(f"✓ After density control: {len(peaks)} peaks")
-    print(f"  Average: {len(peaks) / times[-1]:.1f} peaks/second")
+    logger.info(f"✓ After density control: {len(peaks)} peaks")
+    logger.info(f"  Average: {len(peaks) / times[-1]:.1f} peaks/second")
 
     return peaks
 
@@ -197,34 +204,48 @@ def create_constellation_map(audio_path, visualize=True, save_plot=None):
         times: Time bins
         spec: Spectrogram
     """
-    print(f"\n{'='*60}")
-    print(f"PHASE 2: Creating Constellation Map")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"PHASE 2: Creating Constellation Map")
+    logger.info(f"{'='*60}")
 
     # Step 1: Load audio
-    print("\n[1/3] Loading audio...")
+    logger.info("\n[1/3] Loading audio...")
     audio, sr = load_audio(audio_path)
 
     # Step 2: Generate spectrogram
-    print("\n[2/3] Generating spectrogram...")
+    logger.info("\n[2/3] Generating spectrogram...")
     freqs, times, spec = generate_spectrogram(audio, sr)
 
     # Step 3: Find peaks
-    print("\n[3/3] Detecting peaks...")
+    logger.info("\n[3/3] Detecting peaks...")
     peaks = find_peaks(spec, freqs, times)
 
     # Visualize results
     if visualize:
-        print("\n[Visualizing] Generating constellation map plot...")
+        logger.info("\n[Visualizing] Generating constellation map plot...")
         visualize_constellation_map(
             audio, sr, spec, freqs, times, peaks, save_path=save_plot
         )
 
-    print(f"\n{'='*60}")
-    print(f"✓ Constellation map created successfully!")
-    print(f"  Total peaks: {len(peaks)}")
-    print(f"  Duration: {times[-1]:.2f} seconds")
-    print(f"  Peak density: {len(peaks)/times[-1]:.1f} peaks/second")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"✓ Constellation map created successfully!")
+    logger.info(f"  Total peaks: {len(peaks)}")
+    logger.info(f"  Duration: {times[-1]:.2f} seconds")
+    logger.info(f"  Peak density: {len(peaks)/times[-1]:.1f} peaks/second")
+    logger.info(f"{'='*60}\n")
 
     return peaks, freqs, times, spec
+
+
+if __name__ == "__main__":
+    """
+    Test the constellation map generation on a sample audio file.
+
+    """
+
+    AUDIO_FILE = "./data/db_tracks/sample1.mp3"
+    SAVE_PLOT = "constellation_map.png"
+
+    peaks, freqs, times, spec = create_constellation_map(
+        AUDIO_FILE, visualize=True, save_plot=SAVE_PLOT
+    )

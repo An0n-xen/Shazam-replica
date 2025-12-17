@@ -6,9 +6,15 @@ import librosa
 import sounddevice as sd
 from scipy.io.wavfile import write
 
+import logging
+from utils.logging_config import setup_logger
+
+# setting up logger
+logger = setup_logger(__name__, level=logging.INFO)
+
 
 def generate_constellation_map(audio_path):
-    print(f"Processing {audio_path}...")
+    logger.info(f"Processing {audio_path}...")
     # Load audio
     y, sr = librosa.load(audio_path, sr=22050, mono=True)
 
@@ -31,7 +37,7 @@ def generate_constellation_map(audio_path):
     # Zip and Sort (Crucial Step for Hashing)
     peaks = sorted(zip(time_idx, freq_idx))
 
-    print(f"Found {len(peaks)} peaks.")
+    logger.info(f"Found {len(peaks)} peaks.")
     return peaks, (spectrogram, sr), (time_idx, freq_idx)
 
 
@@ -118,18 +124,17 @@ class SimpleShazam:
 
 
 def record_audio(duration=10, fs=22050):
-    print(f"🎤 Listening for {duration} seconds...")
+    logger.info(f"🎤 Listening for {duration} seconds...")
 
     # Record audio (mono)
     recording = sd.rec(int(duration * fs), samplerate=fs, channels=1)
     sd.wait()  # Wait until recording is finished
 
-    print("✅ Recording complete.")
+    logger.info("✅ Recording complete.")
 
     # Save to a temporary file (so librosa can load it easily)
     filename = "temp_query.wav"
-    # sounddevice returns float32, convert to int16 for wav writing if needed,
-    # but scipy often handles floats fine. Let's stick to standard float save.
+
     write(filename, fs, recording)
 
     return filename

@@ -3,8 +3,13 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from config import HashConfig
 import hashlib
-from utils.visualize import visualize_hash_generation
-from utils.audio_utils import create_constellation_map
+from audio_utils import create_constellation_map
+
+import logging
+from logging_config import setup_logger
+
+# setting up logger
+logger = setup_logger(__name__, level=logging.INFO)
 
 
 def generate_hashes(peaks, times, freqs):
@@ -22,16 +27,16 @@ def generate_hashes(peaks, times, freqs):
     Returns:
         hashes: List of (hash, time_offset) tuples
     """
-    print(f"\n{'='*60}")
-    print(f"PHASE 3: Generating Combinatorial Hashes")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"PHASE 3: Generating Combinatorial Hashes")
+    logger.info(f"{'='*60}\n")
 
     # Sort peaks by time (required for target zone logic)
     peaks_sorted = sorted(peaks, key=lambda x: x[0])
 
-    print(f"Processing {len(peaks_sorted)} peaks...")
-    print(f"Fan-out factor: {HashConfig.FAN_OUT}")
-    print(
+    logger.info(f"Processing {len(peaks_sorted)} peaks...")
+    logger.info(f"Fan-out factor: {HashConfig.FAN_OUT}")
+    logger.info(
         f"Target zone: {HashConfig.TARGET_T_MIN}s to {HashConfig.TARGET_T_MAX}s ahead\n"
     )
 
@@ -81,9 +86,9 @@ def generate_hashes(peaks, times, freqs):
             time_offset = times[anchor_t]  # Convert to seconds
             hashes.append((hash_value, time_offset))
 
-    print(f"✓ Generated {len(hashes)} hashes")
-    print(f"  Hashes per peak: {len(hashes)/len(peaks_sorted):.1f}")
-    print(f"  Expected: ~{HashConfig.FAN_OUT}")
+    logger.info(f"✓ Generated {len(hashes)} hashes")
+    logger.info(f"  Hashes per peak: {len(hashes)/len(peaks_sorted):.1f}")
+    logger.info(f"  Expected: ~{HashConfig.FAN_OUT}")
 
     return hashes
 
@@ -121,9 +126,9 @@ def analyze_hash_distribution(hashes):
     Args:
         hashes: List of (hash, time_offset) tuples
     """
-    print(f"\n{'='*60}")
-    print(f"Hash Distribution Analysis")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"Hash Distribution Analysis")
+    logger.info(f"{'='*60}\n")
 
     # Count duplicate hashes
     hash_counts = defaultdict(int)
@@ -133,44 +138,44 @@ def analyze_hash_distribution(hashes):
     unique_hashes = len(hash_counts)
     total_hashes = len(hashes)
 
-    print(f"Total hashes:    {total_hashes}")
-    print(f"Unique hashes:   {unique_hashes}")
-    print(f"Uniqueness:      {unique_hashes/total_hashes*100:.1f}%")
+    logger.info(f"Total hashes:    {total_hashes}")
+    logger.info(f"Unique hashes:   {unique_hashes}")
+    logger.info(f"Uniqueness:      {unique_hashes/total_hashes*100:.1f}%")
 
     # Check for collisions
     duplicates = {h: c for h, c in hash_counts.items() if c > 1}
-    print(f"Collisions:      {len(duplicates)}")
+    logger.info(f"Collisions:      {len(duplicates)}")
 
     if duplicates:
         max_collision = max(duplicates.values())
-        print(
+        logger.info(
             f"Max collision:   {max_collision} (same hash appears {max_collision} times)"
         )
 
     # Time distribution
     time_offsets = [t for _, t in hashes]
-    print(f"\nTime coverage:")
-    print(f"  Min time:      {min(time_offsets):.2f}s")
-    print(f"  Max time:      {max(time_offsets):.2f}s")
-    print(f"  Duration:      {max(time_offsets) - min(time_offsets):.2f}s")
+    logger.info(f"\nTime coverage:")
+    logger.info(f"  Min time:      {min(time_offsets):.2f}s")
+    logger.info(f"  Max time:      {max(time_offsets):.2f}s")
+    logger.info(f"  Duration:      {max(time_offsets) - min(time_offsets):.2f}s")
 
     # Entropy check
     entropy_score = unique_hashes / total_hashes
-    print(f"\nEntropy assessment:")
+    logger.info(f"\nEntropy assessment:")
     if entropy_score > 0.95:
-        print(f"  ✓ EXCELLENT ({entropy_score*100:.1f}% unique)")
-        print(f"    High specificity, low false positive risk")
+        logger.info(f"  ✓ EXCELLENT ({entropy_score*100:.1f}% unique)")
+        logger.info(f"    High specificity, low false positive risk")
     elif entropy_score > 0.85:
-        print(f"  ✓ GOOD ({entropy_score*100:.1f}% unique)")
-        print(f"    Decent specificity")
+        logger.info(f"  ✓ GOOD ({entropy_score*100:.1f}% unique)")
+        logger.info(f"    Decent specificity")
     elif entropy_score > 0.70:
-        print(f"  ⚠ MODERATE ({entropy_score*100:.1f}% unique)")
-        print(f"    Consider increasing fan-out or target zone")
+        logger.info(f"  ⚠ MODERATE ({entropy_score*100:.1f}% unique)")
+        logger.info(f"    Consider increasing fan-out or target zone")
     else:
-        print(f"  ✗ LOW ({entropy_score*100:.1f}% unique)")
-        print(f"    Too many collisions, adjust parameters")
+        logger.info(f"  ✗ LOW ({entropy_score*100:.1f}% unique)")
+        logger.info(f"    Too many collisions, adjust parameters")
 
-    print(f"{'='*60}\n")
+    logger.info(f"{'='*60}\n")
 
 
 def fingerprint_audio(audio_path, visualize=False, save_plot=None):
@@ -203,7 +208,9 @@ def fingerprint_audio(audio_path, visualize=False, save_plot=None):
 
     # Visualize (optional)
     if visualize:
-        print("\n[Visualizing] Generating hash pair visualization...")
+        from visualize import visualize_hash_generation
+
+        logger.info("\n[Visualizing] Generating hash pair visualization...")
         visualize_hash_generation(
             peaks, times, freqs, hashes, num_examples=5, save_path=save_plot
         )
@@ -216,13 +223,26 @@ def fingerprint_audio(audio_path, visualize=False, save_plot=None):
         "hashes_per_second": len(hashes) / times[-1],
     }
 
-    print(f"\n{'='*60}")
-    print(f"✓ Audio fingerprinting complete!")
-    print(f"  File: {audio_path}")
-    print(f"  Duration: {metadata['duration']:.2f}s")
-    print(f"  Peaks: {metadata['num_peaks']}")
-    print(f"  Hashes: {metadata['num_hashes']}")
-    print(f"  Density: {metadata['hashes_per_second']:.1f} hashes/second")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"✓ Audio fingerprinting complete!")
+    logger.info(f"  File: {audio_path}")
+    logger.info(f"  Duration: {metadata['duration']:.2f}s")
+    logger.info(f"  Peaks: {metadata['num_peaks']}")
+    logger.info(f"  Hashes: {metadata['num_hashes']}")
+    logger.info(f"  Density: {metadata['hashes_per_second']:.1f} hashes/second")
+    logger.info(f"{'='*60}\n")
 
     return hashes, metadata
+
+
+if __name__ == "__main__":
+    """
+    Test hash generation on a sample audio file.
+    """
+
+    AUDIO_FILE = "./data/db_tracks/sample1.mp3"
+    SAVE_PLOT = "hash_generation.png"
+
+    hashes, metadata = fingerprint_audio(
+        AUDIO_FILE, visualize=True, save_plot=SAVE_PLOT
+    )

@@ -5,7 +5,12 @@ from collections import defaultdict
 from pathlib import Path
 import time
 from config import DatabaseConfig
-from utils.fingerprint import generate_hashes, fingerprint_audio
+
+import logging
+from logging_config import setup_logger
+
+# setting up logger
+logger = setup_logger(__name__, level=logging.INFO)
 
 
 class FingerprintDatabase:
@@ -140,9 +145,9 @@ class FingerprintDatabase:
             json.dump(self.song_metadata, f, indent=2)
 
         db_size_mb = os.path.getsize(db_path) / (1024 * 1024)
-        print(f"\n✓ Database saved:")
-        print(f"  Hash table: {db_path} ({db_size_mb:.2f} MB)")
-        print(f"  Metadata: {metadata_path}")
+        logging.info(f"\n✓ Database saved:")
+        logging.info(f"  Hash table: {db_path} ({db_size_mb:.2f} MB)")
+        logging.info(f"  Metadata: {metadata_path}")
 
     @classmethod
     def load(cls, db_path=None, metadata_path=None):
@@ -187,21 +192,21 @@ class FingerprintDatabase:
         """Print database statistics"""
         stats = self.get_stats()
 
-        print(f"\n{'='*60}")
-        print(f"DATABASE STATISTICS")
-        print(f"{'='*60}")
-        print(f"Songs in database:     {stats['num_songs']}")
-        print(f"Unique hashes:         {stats['unique_hashes']:,}")
-        print(f"Total hash entries:    {stats['total_hash_entries']:,}")
-        print(f"Avg hashes per song:   {stats['avg_hashes_per_song']:.1f}")
-        print(f"Avg collision rate:    {stats['avg_collisions']:.2f} songs/hash")
-        print(f"{'='*60}\n")
+        logger.info(f"\n{'='*60}")
+        logger.info(f"DATABASE STATISTICS")
+        logger.info(f"{'='*60}")
+        logger.info(f"Songs in database:     {stats['num_songs']}")
+        logger.info(f"Unique hashes:         {stats['unique_hashes']:,}")
+        logger.info(f"Total hash entries:    {stats['total_hash_entries']:,}")
+        logger.info(f"Avg hashes per song:   {stats['avg_hashes_per_song']:.1f}")
+        logger.info(f"Avg collision rate:    {stats['avg_collisions']:.2f} songs/hash")
+        logger.info(f"{'='*60}\n")
 
         # List songs
         if self.song_metadata:
-            print("Songs in database:")
-            print(f"{'ID':<5} {'Title':<30} {'Hashes':<10} {'Duration':<10}")
-            print(f"{'-'*60}")
+            logger.info("Songs in database:")
+            logger.info(f"{'ID':<5} {'Title':<30} {'Hashes':<10} {'Duration':<10}")
+            logger.info(f"{'-'*60}")
             for song_id, info in sorted(self.song_metadata.items()):
                 title = (
                     info["title"][:28] + ".."
@@ -229,10 +234,12 @@ def index_audio_file(audio_path, database, metadata=None):
     Returns:
         song_id: ID assigned to this song
     """
-    print(f"\nIndexing: {audio_path}")
-    print(f"{'-'*60}")
+    logger.info(f"\nIndexing: {audio_path}")
+    logger.info(f"{'-'*60}")
 
     try:
+        from fingerprint import fingerprint_audio
+
         # Generate fingerprints (Phase 2 + 3)
         hashes, fp_metadata = fingerprint_audio(
             audio_path, visualize=False  # Don't show plots during batch indexing
@@ -249,7 +256,7 @@ def index_audio_file(audio_path, database, metadata=None):
         return song_id
 
     except Exception as e:
-        print(f"✗ Error indexing {audio_path}: {e}")
+        logger.error(f"✗ Error indexing {audio_path}: {e}")
         return None
 
 
@@ -265,10 +272,10 @@ def index_directory(directory_path, database, pattern="*.wav"):
     Returns:
         List of song_ids that were indexed
     """
-    print(f"\n{'='*60}")
-    print(f"INDEXING DIRECTORY: {directory_path}")
-    print(f"Pattern: {pattern}")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"INDEXING DIRECTORY: {directory_path}")
+    logger.info(f"Pattern: {pattern}")
+    logger.info(f"{'='*60}\n")
 
     # Find all matching audio files
     directory = Path(directory_path)
@@ -280,7 +287,7 @@ def index_directory(directory_path, database, pattern="*.wav"):
             audio_files.extend(directory.glob(ext))
 
     if not audio_files:
-        print(f"⚠ No audio files found in {directory_path}")
+        logger.info(f"⚠ No audio files found in {directory_path}")
         return []
 
     print(f"Found {len(audio_files)} audio files")
@@ -290,7 +297,7 @@ def index_directory(directory_path, database, pattern="*.wav"):
 
     # Index each file
     for i, audio_file in enumerate(audio_files, 1):
-        print(f"\n[{i}/{len(audio_files)}] Processing: {audio_file.name}")
+        logger.info(f"\n[{i}/{len(audio_files)}] Processing: {audio_file.name}")
 
         # Extract metadata from filename if possible
         metadata = {
@@ -305,11 +312,36 @@ def index_directory(directory_path, database, pattern="*.wav"):
 
     elapsed = time.time() - start_time
 
-    print(f"\n{'='*60}")
-    print(f"✓ INDEXING COMPLETE")
-    print(f"  Successfully indexed: {len(indexed_ids)}/{len(audio_files)} files")
-    print(f"  Time taken: {elapsed:.1f} seconds")
-    print(f"  Avg time per file: {elapsed/max(1, len(indexed_ids)):.1f} seconds")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"✓ INDEXING COMPLETE")
+    logger.info(f"  Successfully indexed: {len(indexed_ids)}/{len(audio_files)} files")
+    logger.info(f"  Time taken: {elapsed:.1f} seconds")
+    logger.info(f"  Avg time per file: {elapsed/max(1, len(indexed_ids)):.1f} seconds")
+    logger.info(f"{'='*60}\n")
 
     return indexed_ids
+
+
+if __name__ == "__main__":
+    """
+    Test Example usage of the database system.
+    """
+
+    # Create new database
+    db = FingerprintDatabase()
+
+    AUDIO_DIR = "./data/db_tracks"
+
+    if os.path.exists(AUDIO_DIR):
+        indexed = index_directory(AUDIO_DIR, db)
+
+        # Show statistics
+        db.print_stats()
+
+        # Save to disk
+        db.save()
+
+    if os.path.exists(DatabaseConfig.DB_FILE):
+        # Load from disk
+        db_loaded = FingerprintDatabase.load()
+        db_loaded.print_stats()
