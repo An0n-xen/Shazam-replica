@@ -2,9 +2,13 @@ import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Callable
-from config import HashConfig
 
-from matcher import score_match, calculate_time_offsets
+try:
+    from utils.config import HashConfig
+    from utils.matcher import score_match, calculate_time_offsets
+except ImportError:
+    from config import HashConfig
+    from matcher import score_match, calculate_time_offsets
 
 
 def plot_constellation(audio_path: str, generate_constellation_map: Callable):

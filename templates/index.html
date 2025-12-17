@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sonic Identify | Future of Sound</title>
+    <meta name="description" content="Next-gen audio fingerprinting interface" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --bg-dark: #050505;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-hover: rgba(255, 255, 255, 0.1);
+        --neon-blue: #00f3ff;
+        --neon-pink: #bc13fe;
+        --neon-purple: #7000ff;
+        --text-main: #ffffff;
+        --text-dim: rgba(255, 255, 255, 0.6);
+        --success: #00ff9d;
+        --error: #ff0055;
+        
+        --glow-blue: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(0, 243, 255, 0.3);
+        --glow-pink: 0 0 10px rgba(188, 19, 254, 0.5), 0 0 20px rgba(188, 19, 254, 0.3);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Rajdhani', sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        min-height: 100vh;
+        overflow-x: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle at 50% 10%, #1a1a2e 0%, #000000 100%);
+      }
+
+      /* Animated Background Grid */
+      .grid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-image: 
+          linear-gradient(var(--glass) 1px, transparent 1px),
+          linear-gradient(90deg, var(--glass) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: center top;
+        transform: perspective(500px) rotateX(60deg) scale(2.5);
+        transform-origin: center top;
+        opacity: 0.2;
+        animation: gridMove 20s linear infinite;
+        pointer-events: none;
+      }
+
+      .ambient-glow {
+        position: fixed;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(112, 0, 255, 0.15), transparent 70%);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        pointer-events: none;
+        animation: pulseGlow 8s ease-in-out infinite alternate;
+      }
+
+      @keyframes gridMove {
+        0% { background-position: center 0; }
+        100% { background-position: center 40px; }
+      }
+
+      @keyframes pulseGlow {
+        0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.8); }
+        100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      }
+
+      .container {
+        width: 100%;
+        max-width: 550px;
+        padding: 20px;
+        position: relative;
+        z-index: 10;
+      }
+
+      .main-card {
+        background: rgba(10, 10, 20, 0.6);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Top neon line on card */
+      .main-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+        box-shadow: 0 0 15px var(--neon-blue);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .logo-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+        display: inline-block;
+        filter: drop-shadow(0 0 10px var(--neon-purple));
+        animation: bounce 3s ease-in-out infinite;
+      }
+
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 2.2rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #fff 0%, var(--neon-blue) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
+      }
+
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 1rem;
+        letter-spacing: 1px;
+        font-weight: 300;
+      }
+
+      .status-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--text-dim);
+        margin-bottom: 30px;
+        padding: 8px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: inline-flex;
+        
+      }
+      
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--text-dim);
+      }
+      .status-dot.active {
+        background-color: var(--success);
+        box-shadow: 0 0 8px var(--success);
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        padding: 4px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 16px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .tab {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 12px;
+        color: var(--text-dim);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .tab.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--neon-blue);
+        text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+        box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.1);
+      }
+
+      .tab:hover:not(.active) {
+        color: var(--text-main);
+      }
+
+      .tab-content {
+        display: none;
+        animation: fadeScale 0.4s ease forwards;
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      @keyframes fadeScale {
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Sections & Wrappers */
+      .find-section {
+        margin-bottom: 10px;
+      }
+      
+      .section-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 15px;
+        text-align: center;
+        position: relative;
+        display: inline-block;
+        width: 100%;
+      }
+
+      /* Upload Area */
+      .upload-container {
+        position: relative;
+        height: 140px;
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(180deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);
+        overflow: hidden;
+      }
+
+      .upload-container:hover, .upload-container.dragover {
+        border-color: var(--neon-blue);
+        background: rgba(0, 243, 255, 0.05);
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+      }
+
+      .upload-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        opacity: 0.7;
+      }
+
+      .upload-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      
+      .upload-sub {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+      }
+
+      input[type="file"] { display: none; }
+
+      /* Visual OR Divider */
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 25px 0;
+        color: var(--text-dim);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.8rem;
+      }
+      .divider::before, .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .divider span {
+        padding: 0 15px;
+      }
+
+      /* Record Button Area */
+      .record-container {
+        text-align: center;
+      }
+
+      .btn-record {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: none;
+        background: transparent;
+        border: 1px solid var(--neon-pink);
+        color: var(--neon-pink);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        background: rgba(188, 19, 254, 0.05);
+      }
+
+      .btn-record:hover {
+        background: var(--neon-pink);
+        color: #fff;
+        box-shadow: var(--glow-pink);
+      }
+
+      .btn-record.recording {
+        background: var(--neon-pink);
+        color: #fff;
+        animation: pulseRecord 1.5s infinite;
+      }
+
+      @keyframes pulseRecord {
+        0% { box-shadow: 0 0 0 0 rgba(188, 19, 254, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(188, 19, 254, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(188, 19, 254, 0); }
+      }
+
+      .btn-stop {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--text-dim);
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Rajdhani', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: 0.3s;
+      }
+      .btn-stop:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      .timer {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 20px 0;
+        text-align: center;
+        background: linear-gradient(180deg, #fff 0%, var(--text-dim) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: none;
+      }
+
+      /* Visualizer (Simple CSS Bars) */
+      .visualizer {
+        display: none;
+        justify-content: center;
+        gap: 6px;
+        height: 40px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .bar {
+        width: 6px;
+        background: var(--neon-pink);
+        border-radius: 3px;
+        animation: eq 0.6s ease-in-out infinite alternate;
+      }
+      .bar:nth-child(1) { height: 20px; animation-delay: 0.0s; }
+      .bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
+      .bar:nth-child(3) { height: 25px; animation-delay: 0.3s; }
+      .bar:nth-child(4) { height: 40px; animation-delay: 0.2s; }
+      .bar:nth-child(5) { height: 30px; animation-delay: 0.4s; }
+
+      @keyframes eq {
+        0% { height: 10px; opacity: 0.5; }
+        100% { height: 40px; opacity: 1; box-shadow: 0 0 10px var(--neon-pink); }
+      }
+
+      /* Buttons */
+      .btn {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: none;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--neon-blue), #2E3192);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
+      }
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 243, 255, 0.5);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(1);
+      }
+
+      /* Add Song Inputs */
+      .glass-input {
+        width: 100%;
+        padding: 14px 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: #fff;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        transition: 0.3s;
+      }
+      .glass-input:focus {
+        outline: none;
+        border-color: var(--neon-blue);
+        background: rgba(0, 243, 255, 0.05);
+      }
+
+      /* Results */
+      .result-card {
+        margin-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 30px;
+        display: none;
+      }
+      .result-card.active { display: block; animation: slideUp 0.5s ease; }
+
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .match-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .match-icon { font-size: 1.5rem; }
+      .match-title { 
+        font-family: 'Orbitron', sans-serif; 
+        font-size: 1.2rem; 
+        color: var(--success);
+      }
+      .error .match-title { color: var(--error); }
+
+      .song-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 15px;
+        border-radius: 12px;
+      }
+      .info-label {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+      .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Audio Player */
+      .player-wrapper {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 16px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .player-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .now-playing-info {
+        flex: 1;
+      }
+      .track-name { 
+        font-weight: 700; 
+        color: var(--neon-blue); 
+        margin-bottom: 2px;
+      }
+      .track-artist { font-size: 0.9rem; color: var(--text-dim); }
+
+      audio {
+        width: 100%;
+        height: 32px;
+        filter: invert(1) hue-rotate(180deg);
+        opacity: 0.7;
+        margin-top: 10px;
+      }
+
+      .play-trigger {
+        margin-top: 15px;
+        width: 100%;
+        padding: 14px;
+        background: rgba(0, 255, 157, 0.1);
+        border: 1px solid var(--success);
+        color: var(--success);
+        border-radius: 12px;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .play-trigger:hover {
+        background: var(--success);
+        color: #000;
+        box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+      }
+
+      /* Loading */
+      .loader-container {
+        display: none;
+        text-align: center;
+        padding: 40px 0;
+      }
+      .loader-container.active { display: block; }
+
+      .scanner {
+        height: 2px;
+        width: 100%;
+        background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+        animation: scan 1.5s ease-in-out infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes scan {
+        0% { transform: translateX(-100%) scaleX(0.2); opacity: 0; }
+        50% { transform: translateX(0%) scaleX(1); opacity: 1; }
+        100% { transform: translateX(100%) scaleX(0.2); opacity: 0; }
+      }
+
+    </style>
+  </head>
+  <body>
+    <!-- Background Elements -->
+    <div class="grid-bg"></div>
+    <div class="ambient-glow"></div>
+
+    <div class="container">
+      <div class="main-card">
+        <div class="header">
+          <div class="logo-icon">🎵</div>
+          <h1>Sonic Identify</h1>
+          <p class="subtitle">Audio Recognition</p>
+        </div>
+
+        <div style="text-align: center;">
+          <div class="status-bar" id="status-pill">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">System Initializing...</span>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('find')">FIND SONG</button>
+          <button class="tab" onclick="switchTab('add')">ADD SONG</button>
+        </div>
+
+        <!-- FIND TAB -->
+        <div id="tab-find" class="tab-content active">
+          
+          <div class="find-section">
+            <div class="upload-container" id="uploadArea">
+              <span class="upload-icon">📁</span>
+              <p class="upload-text">Upload Audio File</p>
+              <p class="upload-sub">Drag & Drop or Click (MP3, WAV, M4A)</p>
+              <input type="file" id="fileInput" accept="audio/*" />
+            </div>
+          </div>
+
+          <div class="divider">
+            <span>OR </span>
+          </div>
+
+          <div class="find-section record-container">
+            <div class="visualizer" id="visualizer">
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+            
+            <div id="timer" class="timer">00:00</div>
+
+            <button class="btn-record" id="recordBtn" onclick="toggleRecording()">
+              MICROPHONE RECORD
+            </button>
+            <button id="stopBtn" class="btn-stop" onclick="stopRecording()" style="display:none;">
+              ABORT SCAN
+            </button>
+          </div>
+        </div>
+
+        <!-- ADD TAB -->
+        <div id="tab-add" class="tab-content">
+          <div class="upload-container" id="addUploadArea" style="border-color: rgba(255,255,255,0.1);">
+            <span class="upload-icon">💿</span>
+            <p class="upload-text">Upload New Track</p>
+            <p class="upload-sub" id="addFileText">Drop file here to index</p>
+            <input type="file" id="songFile" accept="audio/*" />
+          </div>
+          <div style="text-align: center; margin-top: 10px; color: var(--success); display: none;" id="selectedFileName"></div>
+          
+          <div style="margin-top: 25px;">
+            <button class="btn btn-primary" id="addSongBtn" onclick="addSong()" disabled>
+              ADD TO DATABASE
+            </button>
+          </div>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div class="loader-container" id="loading">
+          <div class="scanner"></div>
+          <p class="subtitle" id="loadingText">ANALYZING WAVEFORMS...</p>
+        </div>
+
+        <!-- RESULT CARD -->
+        <div class="result-card" id="result">
+          <!-- Dynamic Content Injected Here -->
+        </div>
+
+        <!-- HIDDEN AUDIO ELEMENT FOR PLAYBACK -->
+        <div class="player-wrapper" id="audioPlayerWrapper" style="display: none; margin-top: 20px;">
+          <div class="player-controls">
+            <div class="now-playing-info">
+              <div class="track-name" id="playerTitle">-</div>
+              <div class="track-artist" id="playerArtist">-</div>
+            </div>
+          </div>
+          <audio id="audioElement" controls></audio>
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+      // --- STATE & UTILS ---
+      let mediaRecorder, audioChunks = [], recordingTimer, recordingStart;
+
+      // Status Check
+      fetch("/api/status")
+        .then(r => r.json())
+        .then(d => {
+          const dot = document.getElementById("status-dot");
+          const text = document.getElementById("status-text");
+          if(d.status === "ok"){
+            dot.classList.add("active");
+            text.textContent = `${d.database.num_songs} Tracks Indexed`;
+          } else {
+            text.textContent = "Database Offline";
+          }
+        })
+        .catch(e => {
+          document.getElementById("status-text").textContent = "System Offline";
+        });
+
+      function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        
+        // Clear views
+        document.getElementById('result').classList.remove('active');
+        document.getElementById('audioPlayerWrapper').style.display = 'none';
+      }
+
+      // --- IDENTIFY HANDLERS ---
+      
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+
+      uploadArea.onclick = () => fileInput.click();
+      uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); }
+      uploadArea.ondragleave = () => uploadArea.classList.remove('dragover');
+      uploadArea.ondrop = (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleIdentify(e.dataTransfer.files[0]);
+      }
+      fileInput.onchange = (e) => handleIdentify(e.target.files[0]);
+
+      function handleIdentify(file) {
+        if(!file) return;
+        const fm = new FormData();
+        fm.append("file", file);
+        showLoading("DECODING AUDIO SIGNATURE...");
+        fetch("/api/identify", { method: "POST", body: fm })
+          .then(r => r.json())
+          .then(showResult)
+          .catch(err => {
+            showLoading(false);
+            console.log(err);
+          });
+      }
+
+      // --- RECORDING HANDLERS ---
+      
+      async function toggleRecording() {
+        if (mediaRecorder?.state === "recording") {
+          stopRecording();
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: 'audio/wav' });
+            stream.getTracks().forEach(t => t.stop());
+            
+            // Convert to base64
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+              showLoading("ANALYZING INPUT STREAM...");
+              const res = await fetch("/api/record", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ audio_data: reader.result })
+              });
+              showResult(await res.json());
+            }
+          };
+
+          mediaRecorder.start();
+          
+          // UI Updates
+          document.getElementById("recordBtn").classList.add("recording");
+          document.getElementById("recordBtn").textContent = "LISTENING...";
+          document.getElementById("stopBtn").style.display = "inline-block";
+          document.getElementById("visualizer").style.display = "flex";
+          document.getElementById("timer").style.display = "block";
+
+          recordingStart = Date.now();
+          recordingTimer = setInterval(() => {
+            const s = Math.floor((Date.now() - recordingStart) / 1000);
+            document.getElementById("timer").textContent = `00:${String(s).padStart(2,'0')}`;
+          }, 100);
+
+          setTimeout(() => {
+            if(mediaRecorder?.state === "recording") stopRecording();
+          }, 10000);
+
+        } catch (err) {
+          alert("Audio Input Access Denied");
+        }
+      }
+
+      function stopRecording() {
+        if(mediaRecorder?.state === "recording") {
+          mediaRecorder.stop();
+          clearInterval(recordingTimer);
+          
+          document.getElementById("recordBtn").classList.remove("recording");
+          document.getElementById("recordBtn").textContent = "MICROPHONE RECORD";
+          document.getElementById("stopBtn").style.display = "none";
+          document.getElementById("visualizer").style.display = "none";
+          document.getElementById("timer").style.display = "none";
+        }
+      }
+
+      // --- ADD SONG HANDLERS ---
+      const addArea = document.getElementById("addUploadArea");
+      const addInput = document.getElementById("songFile");
+      const addBtn = document.getElementById("addSongBtn");
+      const fnDisplay = document.getElementById("selectedFileName");
+
+      addArea.onclick = () => addInput.click();
+      addArea.ondragover = e => { e.preventDefault(); addArea.style.borderColor = "var(--neon-blue)"; };
+      addArea.ondragleave = e => { addArea.style.borderColor = ""; };
+      addArea.ondrop = e => {
+        e.preventDefault();
+        addInput.files = e.dataTransfer.files;
+        handleAddSelection(e.dataTransfer.files[0]);
+      }
+      addInput.onchange = e => handleAddSelection(e.target.files[0]);
+
+      function handleAddSelection(file) {
+        if(file) {
+          fnDisplay.textContent = `SELECTED: ${file.name}`;
+          fnDisplay.style.display = "block";
+          addBtn.disabled = false;
+          addArea.style.background = "rgba(0, 243, 255, 0.1)";
+        }
+      }
+
+      async function addSong() {
+        const file = addInput.files[0];
+        if(!file) return;
+
+        const fm = new FormData();
+        fm.append("file", file);
+
+        showLoading("ENCRYPTING TO DATABASE...");
+        const res = await fetch("/api/add-song", { method: "POST", body: fm });
+        const data = await res.json();
+
+        // Reset
+        addBtn.disabled = true;
+        fnDisplay.style.display = "none";
+        addArea.style.background = "";
+        
+        showResult(data);
+        
+        // Update stats
+        fetch("/api/status").then(r=>r.json()).then(d=>{
+           document.getElementById("status-text").textContent = `${d.database.num_songs} Tracks Indexed`;
+        });
+      }
+
+
+      // --- UI HELPERS ---
+      
+      function showLoading(msg) {
+        if(msg) {
+          document.getElementById("loading").classList.add("active");
+          document.getElementById("loadingText").textContent = msg;
+          document.getElementById("result").classList.remove("active");
+          document.getElementById("audioPlayerWrapper").style.display = "none";
+        } else {
+          document.getElementById("loading").classList.remove("active");
+        }
+      }
+
+      function showResult(data) {
+        showLoading(false);
+        const el = document.getElementById("result");
+        el.className = "result-card active"; // reset class
+        
+        if(data.success && (data.match || data.title)) {
+           // Handle both Identify (match object) and Add (title/artist fields)
+           const meta = data.match || data;
+           const isIdentify = !!data.match;
+
+           el.innerHTML = `
+             <div class="match-status">
+               <span class="match-icon">✅</span>
+               <span class="match-title">${isIdentify ? "MATCH CONFIRMED" : "UPLOAD COMPLETE"}</span>
+             </div>
+             
+             <div class="song-info-grid">
+               <div class="info-item">
+                 <div class="info-label">Title</div>
+                 <div class="info-value" style="color:var(--text-main)">${meta.title}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Artist</div>
+                 <div class="info-value" style="color:var(--neon-blue)">${meta.artist}</div>
+               </div>
+               ${isIdentify ? `
+               <div class="info-item">
+                 <div class="info-label">Confidence</div>
+                 <div class="info-value">${meta.confidence}</div>
+               </div>
+               <div class="info-item">
+                 <div class="info-label">Score</div>
+                 <div class="info-value">${meta.score}</div>
+               </div>` : ''}
+             </div>
+             
+             ${isIdentify ? `
+             <button class="play-trigger" onclick="playSong(${meta.song_id}, '${meta.title.replace(/'/g, "\\'")}', '${meta.artist.replace(/'/g, "\\'")}')">
+               ▶ PLAYBACK AUDIO
+             </button>
+             ` : ''}
+           `;
+        } else {
+           el.innerHTML = `
+             <div class="match-status error">
+               <span class="match-icon">❌</span>
+               <span class="match-title">OPERATION FAILED</span>
+             </div>
+             <p style="color: var(--text-dim); text-align: center;">${data.message || "No match found in database."}</p>
+           `;
+        }
+      }
+
+      function playSong(id, title, artist) {
+        const wrap = document.getElementById("audioPlayerWrapper");
+        const audio = document.getElementById("audioElement");
+        
+        document.getElementById("playerTitle").textContent = title;
+        document.getElementById("playerArtist").textContent = artist;
+        
+        wrap.style.display = "block";
+        audio.src = `/audio/${id}`;
+        audio.play();
+        
+        // Smooth scroll to player
+        wrap.scrollIntoView({ behavior: 'smooth' });
+      }
+
+    </script>
+  </body>
+</html>

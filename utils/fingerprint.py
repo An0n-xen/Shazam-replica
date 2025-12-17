@@ -1,12 +1,20 @@
+import logging
+import hashlib
+from math import e
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from config import HashConfig
-import hashlib
-from audio_utils import create_constellation_map
 
-import logging
-from logging_config import setup_logger
+try:
+    # running from main.py
+    from utils.config import HashConfig
+    from utils.audio_utils import create_constellation_map
+    from utils.logging_config import setup_logger
+except ImportError:
+    # running from this file
+    from config import HashConfig
+    from audio_utils import create_constellation_map
+    from logging_config import setup_logger
 
 # setting up logger
 logger = setup_logger(__name__, level=logging.INFO)
@@ -208,7 +216,10 @@ def fingerprint_audio(audio_path, visualize=False, save_plot=None):
 
     # Visualize (optional)
     if visualize:
-        from visualize import visualize_hash_generation
+        try:
+            from utils.visualize import visualize_hash_generation
+        except ImportError:
+            from visualize import visualize_hash_generation
 
         logger.info("\n[Visualizing] Generating hash pair visualization...")
         visualize_hash_generation(

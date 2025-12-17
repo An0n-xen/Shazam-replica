@@ -36,8 +36,8 @@ class DatabaseConfig:
     """Configuration for database storage"""
 
     # Storage paths
-    DB_FILE = "./utils/fingerprint_database.pkl"
-    METADATA_FILE = "./utils/song_metadata.json"
+    DB_FILE = "./data/db/fingerprint_database.pkl"
+    METADATA_FILE = "./data/db/song_metadata.json"
 
 
 class MatchConfig:

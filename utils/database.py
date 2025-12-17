@@ -4,10 +4,15 @@ import json
 from collections import defaultdict
 from pathlib import Path
 import time
-from config import DatabaseConfig
-
 import logging
-from logging_config import setup_logger
+
+try:
+    from utils.config import DatabaseConfig
+    from utils.logging_config import setup_logger
+except ImportError:
+    from config import DatabaseConfig
+    from logging_config import setup_logger
+
 
 # setting up logger
 logger = setup_logger(__name__, level=logging.INFO)
@@ -238,7 +243,10 @@ def index_audio_file(audio_path, database, metadata=None):
     logger.info(f"{'-'*60}")
 
     try:
-        from fingerprint import fingerprint_audio
+        try:
+            from utils.fingerprint import fingerprint_audio
+        except ImportError:
+            from fingerprint import fingerprint_audio
 
         # Generate fingerprints (Phase 2 + 3)
         hashes, fp_metadata = fingerprint_audio(

@@ -1,13 +1,20 @@
+import logging
+import warnings
 import numpy as np
 from scipy import signal
 from scipy.ndimage import maximum_filter
 from scipy.io import wavfile
-from config import AudioConfig as Config
-import warnings
-import logging
-from logging_config import setup_logger
 
-from visualize import visualize_constellation_map
+try:
+    # running from main.py
+    from utils.config import AudioConfig as Config
+    from utils.logging_config import setup_logger
+    from utils.visualize import visualize_constellation_map
+except ImportError:
+    # running from this file
+    from config import AudioConfig as Config
+    from logging_config import setup_logger
+    from visualize import visualize_constellation_map
 
 warnings.filterwarnings("ignore")
 

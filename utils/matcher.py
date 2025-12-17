@@ -6,9 +6,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
 
-from config import MatchConfig
-from database import FingerprintDatabase
-from logging_config import setup_logger
+try:
+    from utils.config import MatchConfig
+    from utils.database import FingerprintDatabase
+    from utils.logging_config import setup_logger
+except ImportError:
+    from config import MatchConfig
+    from database import FingerprintDatabase
+    from logging_config import setup_logger
 
 # setting up logger
 logger = setup_logger(__name__, logging.INFO)
@@ -156,6 +161,10 @@ def match_query(query_hashes, database, return_top_n=5, visualize=False):
 
     for song_id, time_pairs in matches_by_song.items():
         song_info = database.get_song_info(song_id)
+        
+        # Skip if no song info found
+        if song_info is None:
+            song_info = {"title": f"Unknown Song #{song_id}", "artist": "Unknown", "duration": None}
 
         # Calculate score
         score, offset, confidence = score_match(
@@ -203,7 +212,10 @@ def match_query(query_hashes, database, return_top_n=5, visualize=False):
 
         # Visualize if requested
         if visualize and len(results) > 0:
-            from visualize import visualize_match
+            try:
+                from utils.visualize import visualize_match
+            except ImportError:
+                from visualize import visualize_match
 
             visualize_match(results[0], query_hashes)
     else:
